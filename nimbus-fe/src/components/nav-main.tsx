@@ -17,7 +17,16 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import { useSidebarStore } from "@/zustand";
+import { useRouter, usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
+type NavItem = {
+  title: string;
+  url: string;
+  icon?: LucideIcon;
+  isActive?: boolean;
+};
 export function NavMain({
   items,
 }: {
@@ -32,6 +41,14 @@ export function NavMain({
     }[];
   }[];
 }) {
+  const setActiveNav = useSidebarStore((state) => state.setActiveNav);
+  const router = useRouter();
+  const pathname = usePathname();
+  const handleItemClick = (item: NavItem) => {
+    setActiveNav(item.url);
+    router.push(item.url);
+  };
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -52,13 +69,20 @@ export function NavMain({
                 </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <SidebarMenuSub>
+                <SidebarMenuSub className="mt-1">
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton asChild>
-                        <a href={subItem.url}>
-                          <span>{subItem.title}</span>
-                        </a>
+                      <SidebarMenuSubButton
+                        asChild
+                        onClick={() => handleItemClick(subItem)}
+                        className={cn(
+                          "text-sm",
+                          subItem.url === pathname && "bg-sidebar-accent",
+                        )}
+                      >
+                        {/* <a href={subItem.url}> */}
+                        <span>{subItem.title}</span>
+                        {/* </a> */}
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ))}

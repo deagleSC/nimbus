@@ -1,3 +1,5 @@
+"use client";
+
 import { AppSidebar } from "@/components/common/app-sidebar";
 import { BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -12,9 +14,16 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
+import { useSidebarStore } from "@/zustand";
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { isOpen, open, close } = useSidebarStore();
+
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      defaultOpen={isOpen}
+      onOpenChange={(newOpen) => (newOpen ? open() : close())}
+    >
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
