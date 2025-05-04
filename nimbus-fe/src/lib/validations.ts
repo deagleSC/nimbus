@@ -30,3 +30,23 @@ export const signupSchema = z
   });
 
 export type SignupFormValues = z.infer<typeof signupSchema>;
+
+/**
+ * Change password form schema
+ */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(6, { message: "Current password must be at least 6 characters" }),
+    newPassword: z
+      .string()
+      .min(6, { message: "New password must be at least 6 characters" }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;

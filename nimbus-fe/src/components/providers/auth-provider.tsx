@@ -114,7 +114,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Logout failed", {
-        description: "Failed to log out. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to log out. Please try again.",
       });
     }
   }, [hasMounted, logoutAction, router]);
@@ -201,6 +204,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Handle logout in the background
         logoutAction().catch((error) => {
           console.error("Error during automatic logout:", error);
+          toast.error("Logout error", {
+            description:
+              error instanceof Error
+                ? error.message
+                : "Failed to complete logout process. Please refresh the page.",
+          });
         });
       }
     }, 60000); // Check every minute
@@ -215,6 +224,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Handle redirects based on authentication status
     const isPublicRoute = publicRoutes.includes(pathname);
     const isRouteProtected = !isPublicRoute;
+
+    // Handle base URL redirect
+    if (pathname === "/") {
+      if (isAuthenticated) {
+        router.push("/dashboard/overview");
+        return;
+      } else {
+        router.push("/auth/login");
+        return;
+      }
+    }
 
     if (!isAuthenticated && isRouteProtected) {
       // Store the attempted URL to redirect back after login

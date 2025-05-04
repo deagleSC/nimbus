@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Sparkles,
-} from "lucide-react";
+import { BadgeCheck, ChevronsUpDown, LogOut, Settings } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -25,7 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useAuthStore } from "@/zustand";
+import { useAuthStore, useSidebarStore } from "@/zustand";
 import { useRouter } from "next/navigation";
 
 export function NavUser({
@@ -40,10 +33,16 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
+  const setActiveNav = useSidebarStore((state) => state.setActiveNav);
 
   const handleLogout = async () => {
     await logout();
     router.push("/auth/login");
+  };
+
+  const navigateTo = (path: string) => {
+    setActiveNav(path);
+    router.push(path);
   };
 
   return (
@@ -87,25 +86,21 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles />
                 Upgrade to Pro
               </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            </DropdownMenuGroup> */}
+            {/* <DropdownMenuSeparator /> */}
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigateTo("/account")}>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
+              <DropdownMenuItem onClick={() => navigateTo("/preferences")}>
+                <Settings />
+                Preferences
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

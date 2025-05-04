@@ -28,18 +28,25 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    // Define a type for the potential error response data with the specific API format
+    interface ErrorResponseData {
+      success?: boolean;
+      message?: string;
+      [key: string]: unknown;
+    }
+
+    const errorData = error.response?.data as ErrorResponseData | undefined;
+    const errorMessage = errorData?.message || error.message;
+
     const customError: ApiError = {
-      message: error.message || "An unexpected error occurred",
+      message: errorMessage,
       status: error.response?.status,
     };
 
     // Handle specific error cases
     if (error.response?.status === 401) {
-      // Handle unauthorized (e.g., redirect to login)
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
-        // Optional: Redirect to login
-        // window.location.href = '/login';
       }
     }
 
@@ -60,14 +67,28 @@ export async function apiRequest<T>(
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      // Define a type for the potential error response data
+      interface ErrorResponseData {
+        success?: boolean;
+        message?: string;
+        [key: string]: unknown;
+      }
+
+      const errorData = error.response?.data as ErrorResponseData | undefined;
+      const errorMessage = errorData?.message || error.message;
+
       throw {
-        message: error.response?.data?.message || error.message,
+        message: errorMessage,
         status: error.response?.status,
         code: error.code,
       } as ApiError;
     }
+
+    // For non-Axios errors (should be rare)
+    const finalMessage = (error as Error).message;
+
     throw {
-      message: "An unexpected error occurred",
+      message: finalMessage,
     } as ApiError;
   }
 }

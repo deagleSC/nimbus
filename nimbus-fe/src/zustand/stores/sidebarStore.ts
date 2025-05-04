@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, devtools } from "zustand/middleware";
-import { Brain, LayoutDashboard, PlayCircle, Settings } from "lucide-react";
+import { Brain, LayoutDashboard, PlayCircle } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 type NavItem = {
@@ -102,25 +102,25 @@ const defaultNavItems: NavItem[] = [
       },
     ],
   },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-    items: [
-      {
-        title: "Account",
-        url: "/settings/account",
-      },
-      {
-        title: "Preferences",
-        url: "/settings/preferences",
-      },
-      {
-        title: "Logout",
-        url: "/auth/logout",
-      },
-    ],
-  },
+  // {
+  //   title: "About",
+  //   url: "/about",
+  //   icon: Info,
+  //   items: [
+  //     {
+  //       title: "Our Team",
+  //       url: "/about/team",
+  //     },
+  //     {
+  //       title: "Mission",
+  //       url: "/about/mission",
+  //     },
+  //     {
+  //       title: "Contact",
+  //       url: "/about/contact",
+  //     },
+  //   ],
+  // },
 ];
 
 export const useSidebarStore = create<SidebarState>()(

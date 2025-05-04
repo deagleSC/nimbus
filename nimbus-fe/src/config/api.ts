@@ -13,6 +13,7 @@ export const API_CONFIG = {
       logout: "/auth/logout",
       profile: "/auth/me",
       refresh: "/auth/refresh",
+      changePassword: "/auth/change-password",
     },
     user: {
       profile: "/users/profile",

@@ -57,11 +57,43 @@ export const useAuthStore = create<AuthStore>()(
               requestStatus: { isLoading: false, error: null },
             });
           } catch (error) {
+            console.log("Login error object:", error);
+
+            // Extract the error message from the API error
+            let errorMessage: string;
+
+            if (
+              error &&
+              typeof error === "object" &&
+              "message" in error &&
+              typeof error.message === "string"
+            ) {
+              errorMessage = error.message;
+            } else if (error instanceof Error) {
+              errorMessage = error.message;
+            } else {
+              // If we get here, it means something is wrong with our error handling
+              // Log this as it should not happen in production
+              console.error("Unhandled error format:", error);
+              errorMessage = "Login failed";
+            }
+
+            console.log("Final login error message:", errorMessage);
+
             set({
               requestStatus: {
                 isLoading: false,
-                error: error as ApiError,
+                error: {
+                  message: errorMessage,
+                  status: (error as ApiError)?.status,
+                  code: (error as ApiError)?.code,
+                },
               },
+            });
+
+            // Show toast immediately for better user feedback
+            toast.error("Login failed", {
+              description: errorMessage,
             });
           }
         },
@@ -87,15 +119,36 @@ export const useAuthStore = create<AuthStore>()(
               description: "You have been logged out successfully.",
             });
           } catch (error) {
+            // Extract error message
+            let errorMessage: string;
+
+            if (
+              error &&
+              typeof error === "object" &&
+              "message" in error &&
+              typeof error.message === "string"
+            ) {
+              errorMessage = error.message;
+            } else if (error instanceof Error) {
+              errorMessage = error.message;
+            } else {
+              console.error("Unhandled logout error format:", error);
+              errorMessage = "Logout process failed";
+            }
+
             set({
               requestStatus: {
                 isLoading: false,
-                error: error as ApiError,
+                error: {
+                  message: errorMessage,
+                  status: (error as ApiError)?.status,
+                  code: (error as ApiError)?.code,
+                },
               },
             });
 
             toast.error("Logout failed", {
-              description: (error as ApiError).message,
+              description: errorMessage,
             });
           }
         },
@@ -110,15 +163,36 @@ export const useAuthStore = create<AuthStore>()(
               requestStatus: { isLoading: false, error: null },
             });
           } catch (error) {
+            // Extract error message
+            let errorMessage: string;
+
+            if (
+              error &&
+              typeof error === "object" &&
+              "message" in error &&
+              typeof error.message === "string"
+            ) {
+              errorMessage = error.message;
+            } else if (error instanceof Error) {
+              errorMessage = error.message;
+            } else {
+              console.error("Unhandled user fetch error format:", error);
+              errorMessage = "Could not retrieve user data";
+            }
+
             set({
               requestStatus: {
                 isLoading: false,
-                error: error as ApiError,
+                error: {
+                  message: errorMessage,
+                  status: (error as ApiError)?.status,
+                  code: (error as ApiError)?.code,
+                },
               },
             });
 
             toast.error("Failed to fetch user data", {
-              description: (error as ApiError).message,
+              description: errorMessage,
             });
           }
         },

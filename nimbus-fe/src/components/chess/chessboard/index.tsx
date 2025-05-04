@@ -1,7 +1,7 @@
 "use client";
 
 import { Chess, Color, Square } from "chess.js";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
   FlipVertical2,
   Eye,
   EyeOff,
+  ChevronsRight,
 } from "lucide-react";
 import {
   Tooltip,
@@ -59,16 +60,15 @@ export default function ChessBoard({
   const [currentPosition, setCurrentPosition] = useState<number>(-1);
   const [sidebarExpanded, setSidebarExpanded] = useState<boolean>(false);
 
-  // const isDesktop = useMediaQuery("(min-width: 1024px)");
-
-  // // Set sidebar expanded by default on desktop
-  // useEffect(() => {
-  //   if (isDesktop) {
-  //     setSidebarExpanded(true);
-  //   } else {
-  //     setSidebarExpanded(false);
-  //   }
-  // }, [isDesktop]);
+  // Drag and drop state
+  const boardRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dragState, setDragState] = useState({
+    dragging: false,
+    fromSquare: null as Square | null,
+    piece: null as { type: string; color: string } | null,
+    position: { x: 0, y: 0 },
+  });
 
   // Reset the chess instance and move history when initialPosition changes
   useEffect(() => {
@@ -91,6 +91,12 @@ export default function ChessBoard({
     }
     setSelectedSquare(null);
     setPossibleMoves([]);
+    setDragState((prev) => ({
+      ...prev,
+      dragging: false,
+      fromSquare: null,
+      piece: null,
+    }));
   }, [initialPosition]);
 
   // Update board orientation when playerColor changes
@@ -98,21 +104,39 @@ export default function ChessBoard({
     setBoardOrientation(playerColor);
   }, [playerColor]);
 
-  const handleSquareClick = (square: Square) => {
-    if (!allowMoves || currentPosition !== moveHistory.length - 1) return;
+  // Keyboard navigation for move history
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        // Previous move
+        jumpToPosition(Math.max(-1, currentPosition - 1));
+      } else if (e.key === "ArrowRight") {
+        // Next move
+        jumpToPosition(Math.min(moveHistory.length - 1, currentPosition + 1));
+      }
+    };
 
-    // If a square is already selected
-    if (selectedSquare) {
-      // Try to make a move from the selected square to the clicked square
+    // Add event listener
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [currentPosition, moveHistory.length]);
+
+  const handleMove = useCallback(
+    (fromSquare: Square, toSquare: Square) => {
+      if (!allowMoves || currentPosition !== moveHistory.length - 1)
+        return false;
+
       try {
         const move = chess.move({
-          from: selectedSquare,
-          to: square,
-          // Add promotion=q as default for pawn promotion to queen
-          promotion: "q",
+          from: fromSquare,
+          to: toSquare,
+          promotion: "q", // Default promotion to queen
         });
 
-        // If move is successful and onMove callback is provided, call it
         if (move && onMove) {
           onMove({
             from: move.from,
@@ -121,7 +145,6 @@ export default function ChessBoard({
           });
         }
 
-        // Update move history
         if (move) {
           const newMoveNumber = Math.floor(moveHistory.length / 2) + 1;
           const newMove: MoveHistoryType = {
@@ -133,13 +156,26 @@ export default function ChessBoard({
 
           setMoveHistory((prevHistory) => [...prevHistory, newMove]);
           setCurrentPosition(moveHistory.length);
+          setChess(new Chess(chess.fen()));
         }
 
-        // Reset selection and update chess instance
-        setSelectedSquare(null);
-        setPossibleMoves([]);
-        setChess(new Chess(chess.fen()));
+        return true;
       } catch {
+        return false;
+      }
+    },
+    [allowMoves, chess, currentPosition, moveHistory, onMove],
+  );
+
+  const handleSquareClick = (square: Square) => {
+    if (!allowMoves || currentPosition !== moveHistory.length - 1) return;
+
+    // If a square is already selected
+    if (selectedSquare) {
+      // Try to make a move
+      const moveSuccessful = handleMove(selectedSquare, square);
+
+      if (!moveSuccessful) {
         // If the move is invalid, check if the clicked square has a piece of the same color
         const piece = chess.get(square);
         if (piece && piece.color === chess.turn()) {
@@ -153,6 +189,10 @@ export default function ChessBoard({
           setSelectedSquare(null);
           setPossibleMoves([]);
         }
+      } else {
+        // Reset selection after successful move
+        setSelectedSquare(null);
+        setPossibleMoves([]);
       }
     } else {
       // If no square is selected, select the clicked square if it has a piece of the current turn
@@ -165,6 +205,166 @@ export default function ChessBoard({
       }
     }
   };
+
+  // Drag and drop handlers
+  const startDrag = (
+    e: React.MouseEvent | React.TouchEvent,
+    square: Square,
+  ) => {
+    if (!allowMoves || currentPosition !== moveHistory.length - 1) return;
+
+    const piece = chess.get(square);
+    if (!piece || piece.color !== chess.turn()) return;
+
+    // Get client coordinates
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+
+    // Prevent default behavior
+    e.preventDefault();
+
+    // Calculate possible moves
+    const moves = chess.moves({ square, verbose: true });
+    setPossibleMoves(moves.map((move) => move.to as Square));
+
+    // Set drag state
+    setDragState({
+      dragging: true,
+      fromSquare: square,
+      piece: { type: piece.type, color: piece.color },
+      position: { x: clientX, y: clientY },
+    });
+  };
+
+  // Effect for handling dragging
+  useEffect(() => {
+    if (!dragState.dragging) return;
+
+    const handleMouseMove = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+
+      setDragState((prev) => ({
+        ...prev,
+        position: { x: clientX, y: clientY },
+      }));
+    };
+
+    const handleMouseUp = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+
+      if (!boardRef.current || !dragState.fromSquare) {
+        // Reset state if board ref is missing
+        setDragState((prev) => ({
+          ...prev,
+          dragging: false,
+          fromSquare: null,
+          piece: null,
+        }));
+        setPossibleMoves([]);
+        return;
+      }
+
+      const boardRect = boardRef.current.getBoundingClientRect();
+      const squareSize = boardRect.width / 8;
+
+      // Get final position
+      const clientX =
+        "changedTouches" in e && e.changedTouches.length > 0
+          ? e.changedTouches[0].clientX
+          : "touches" in e && e.touches.length > 0
+            ? e.touches[0].clientX
+            : (e as MouseEvent).clientX;
+
+      const clientY =
+        "changedTouches" in e && e.changedTouches.length > 0
+          ? e.changedTouches[0].clientY
+          : "touches" in e && e.touches.length > 0
+            ? e.touches[0].clientY
+            : (e as MouseEvent).clientY;
+
+      // Check if cursor is inside the board
+      if (
+        clientX < boardRect.left ||
+        clientX > boardRect.right ||
+        clientY < boardRect.top ||
+        clientY > boardRect.bottom
+      ) {
+        // Reset if outside the board
+        setDragState((prev) => ({
+          ...prev,
+          dragging: false,
+          fromSquare: null,
+          piece: null,
+        }));
+        setPossibleMoves([]);
+        return;
+      }
+
+      // Calculate board coordinates
+      const x = clientX - boardRect.left;
+      const y = clientY - boardRect.top;
+
+      // Get the square under the cursor
+      const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
+      const ranks = ["8", "7", "6", "5", "4", "3", "2", "1"];
+
+      // If player is black, flip the ranks and files for calculation
+      const orderedRanks =
+        boardOrientation === "b" ? [...ranks].reverse() : ranks;
+      const orderedFiles =
+        boardOrientation === "b" ? [...files].reverse() : files;
+
+      const fileIndex = Math.floor(x / squareSize);
+      const rankIndex = Math.floor(y / squareSize);
+
+      if (fileIndex < 0 || fileIndex >= 8 || rankIndex < 0 || rankIndex >= 8) {
+        // Reset state if invalid position
+        setDragState((prev) => ({
+          ...prev,
+          dragging: false,
+          fromSquare: null,
+          piece: null,
+        }));
+        setPossibleMoves([]);
+        return;
+      }
+
+      // Calculate target square
+      const targetFile = orderedFiles[fileIndex];
+      const targetRank = orderedRanks[rankIndex];
+      const targetSquare = `${targetFile}${targetRank}` as Square;
+
+      // Try to make the move
+      const fromSquare = dragState.fromSquare;
+      handleMove(fromSquare, targetSquare);
+
+      // Reset drag state regardless of move success
+      setDragState((prev) => ({
+        ...prev,
+        dragging: false,
+        fromSquare: null,
+        piece: null,
+      }));
+      setPossibleMoves([]);
+    };
+
+    // Add event listeners
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("touchmove", handleMouseMove, { passive: false });
+    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("touchend", handleMouseUp);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("touchmove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("touchend", handleMouseUp);
+    };
+  }, [dragState.dragging, dragState.fromSquare, boardOrientation, handleMove]);
 
   // Jump to a specific position in the game history
   const jumpToPosition = (index: number) => {
@@ -183,6 +383,17 @@ export default function ChessBoard({
     setCurrentPosition(index);
     setSelectedSquare(null);
     setPossibleMoves([]);
+    setDragState((prev) => ({
+      ...prev,
+      dragging: false,
+      fromSquare: null,
+      piece: null,
+    }));
+  };
+
+  // Go to latest position
+  const goToLatestPosition = () => {
+    jumpToPosition(moveHistory.length - 1);
   };
 
   // Reset the game
@@ -193,6 +404,12 @@ export default function ChessBoard({
     setPossibleMoves([]);
     setMoveHistory([]);
     setCurrentPosition(-1);
+    setDragState((prev) => ({
+      ...prev,
+      dragging: false,
+      fromSquare: null,
+      piece: null,
+    }));
   };
 
   // Play a random game for testing
@@ -240,6 +457,8 @@ export default function ChessBoard({
     const piece = chess.get(square);
     const isSelected = selectedSquare === square;
     const isPossibleMove = possibleMoves.includes(square);
+    const isBeingDragged =
+      dragState.dragging && dragState.fromSquare === square;
 
     // Determine piece image URL based on the piece type and color
     const pieceImage = piece ? `/chess/${piece.color}${piece.type}.svg` : null;
@@ -250,22 +469,29 @@ export default function ChessBoard({
         className={cn(
           "w-full h-full aspect-square flex items-center justify-center relative max-w-[4rem] max-h-[4rem]",
           isDark ? "bg-gray-600" : "bg-gray-300",
-          isSelected && "ring-2 ring-blue-500",
+          isSelected && "outline outline-2 outline-blue-500 z-10",
           isPossibleMove &&
             !piece &&
             "after:absolute after:w-1/4 after:h-1/4 after:bg-blue-500 after:rounded-full after:opacity-50",
-          isPossibleMove && piece && "ring-2 ring-red-500",
+          isPossibleMove && piece && "outline outline-2 outline-red-500 z-10",
         )}
         onClick={() => handleSquareClick(square as Square)}
       >
-        {pieceImage && piece && (
-          <Image
-            src={pieceImage}
-            alt={`${piece.color}${piece.type}`}
-            width={64}
-            height={64}
-            className="w-full h-full p-1"
-          />
+        {pieceImage && piece && !isBeingDragged && (
+          <div
+            className="w-full h-full p-1 cursor-grab relative"
+            onMouseDown={(e) => startDrag(e, square)}
+            onTouchStart={(e) => startDrag(e, square)}
+          >
+            <Image
+              src={pieceImage}
+              alt={`${piece.color}${piece.type}`}
+              width={64}
+              height={64}
+              className="w-full h-full"
+              draggable={false}
+            />
+          </div>
         )}
       </div>
     );
@@ -282,7 +508,10 @@ export default function ChessBoard({
       boardOrientation === "b" ? [...files].reverse() : files;
 
     return (
-      <div className="grid grid-cols-8 border border-gray-700 w-full max-w-[32rem] aspect-square">
+      <div
+        className="grid grid-cols-8 border border-gray-700 w-full max-w-[32rem] aspect-square relative select-none touch-none"
+        ref={boardRef}
+      >
         {orderedRanks.map((rank) =>
           orderedFiles.map((file) => {
             const square = `${file}${rank}` as Square;
@@ -291,13 +520,37 @@ export default function ChessBoard({
             return renderSquare(square, isDark);
           }),
         )}
+
+        {/* Dragged piece overlay */}
+        {dragState.dragging && dragState.piece && (
+          <div
+            className="fixed pointer-events-none z-50"
+            style={{
+              left: `${dragState.position.x}px`,
+              top: `${dragState.position.y}px`,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <Image
+              src={`/chess/${dragState.piece.color}${dragState.piece.type}.svg`}
+              alt={`${dragState.piece.color}${dragState.piece.type}`}
+              width={64}
+              height={64}
+              className="w-12 h-12"
+            />
+          </div>
+        )}
       </div>
     );
   };
 
   return (
     <Card className="w-full py-4 bg-black border-none">
-      <div className="flex flex-col lg:flex-row gap-4 relative">
+      <div
+        className="flex flex-col lg:flex-row gap-4 relative"
+        ref={containerRef}
+        tabIndex={0}
+      >
         <CardContent className="p-2 sm:p-4 flex justify-center">
           {renderBoard()}
         </CardContent>
@@ -346,68 +599,126 @@ export default function ChessBoard({
           </div>
         </CardContent>
       </div>
-      <CardFooter className="flex flex-wrap gap-2 h-min py-2 px-4">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                onClick={resetGame}
-                size="sm"
-                className="h-9 w-9 p-0"
-              >
-                <RotateCcw size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Reset Board</TooltipContent>
-          </Tooltip>
+      <CardFooter className="flex flex-wrap justify-between h-min py-2 px-4">
+        <div className="flex gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={resetGame}
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                >
+                  <RotateCcw size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Reset Board</TooltipContent>
+            </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setBoardOrientation(boardOrientation === "w" ? "b" : "w")
-                }
-                size="sm"
-                className="h-9 w-9 p-0"
-              >
-                <FlipVertical2 size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Flip Board</TooltipContent>
-          </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    setBoardOrientation(boardOrientation === "w" ? "b" : "w")
+                  }
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                >
+                  <FlipVertical2 size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Flip Board</TooltipContent>
+            </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                onClick={() => setSidebarExpanded(!sidebarExpanded)}
-                size="sm"
-                className="h-9 w-9 p-0 lg:hidden"
-              >
-                {sidebarExpanded ? <EyeOff size={16} /> : <Eye size={16} />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {sidebarExpanded ? "Hide Analysis" : "Show Analysis"}
-            </TooltipContent>
-          </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => setSidebarExpanded(!sidebarExpanded)}
+                  size="sm"
+                  className="h-9 w-9 p-0 lg:hidden"
+                >
+                  {sidebarExpanded ? <EyeOff size={16} /> : <Eye size={16} />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {sidebarExpanded ? "Hide Analysis" : "Show Analysis"}
+              </TooltipContent>
+            </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                onClick={playRandomGame}
-                size="sm"
-                className="h-9 w-9 p-0"
-              >
-                <Dices size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Play Random Game</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={playRandomGame}
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                >
+                  <Dices size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Play Random Game</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        {/* Move navigation controls */}
+        <div className="flex gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    jumpToPosition(Math.max(-1, currentPosition - 1))
+                  }
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                  disabled={currentPosition <= -1}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Previous Move</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    jumpToPosition(
+                      Math.min(moveHistory.length - 1, currentPosition + 1),
+                    )
+                  }
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                  disabled={currentPosition >= moveHistory.length - 1}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Next Move</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={goToLatestPosition}
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                  disabled={currentPosition >= moveHistory.length - 1}
+                >
+                  <ChevronsRight size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Go to Latest Position</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </CardFooter>
     </Card>
   );

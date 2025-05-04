@@ -1,6 +1,5 @@
 import { Chess } from "chess.js";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -126,7 +125,7 @@ export default function MoveHistory({
           ))}
         </TableBody>
       </Table>
-      {currentPosition !== moveHistory.length - 1 && (
+      {/* {currentPosition !== moveHistory.length - 1 && (
         <div className="mt-4">
           <Button
             variant="outline"
@@ -136,7 +135,7 @@ export default function MoveHistory({
             Go to Latest Position
           </Button>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

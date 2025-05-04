@@ -44,17 +44,6 @@ export function LoginForm({
     }
   }, [isAuthenticated, router]);
 
-  useEffect(() => {
-    if (loginRequestStatus.error) {
-      const errorMessage =
-        loginRequestStatus.error.message ||
-        "Invalid credentials. Please try again.";
-      toast.error("Login failed", {
-        description: errorMessage,
-      });
-    }
-  }, [loginRequestStatus.error]);
-
   const onSubmit = async (data: LoginFormValues) => {
     // Handle login submission
     await login(data);
