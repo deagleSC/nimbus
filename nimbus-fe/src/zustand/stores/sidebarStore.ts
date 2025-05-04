@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, devtools } from "zustand/middleware";
 import { Brain, LayoutDashboard, PlayCircle, Settings } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -115,57 +115,64 @@ const defaultNavItems: NavItem[] = [
         title: "Preferences",
         url: "/settings/preferences",
       },
+      {
+        title: "Logout",
+        url: "/auth/logout",
+      },
     ],
   },
 ];
 
 export const useSidebarStore = create<SidebarState>()(
-  persist(
-    (set) => ({
-      isOpen: true,
-      sidebarData: {
-        navMain: defaultNavItems,
-        projects: [],
-        tournaments: [],
-        quickLinks: [],
-      },
-      toggle: () => set((state) => ({ isOpen: !state.isOpen })),
-      close: () => set({ isOpen: false }),
-      open: () => set({ isOpen: true }),
-      updateNavItems: (navItems) =>
-        set((state) => ({
-          sidebarData: {
-            ...state.sidebarData,
-            navMain: navItems,
-          },
-        })),
-      updateProjects: (projects) =>
-        set((state) => ({
-          sidebarData: {
-            ...state.sidebarData,
-            projects,
-          },
-        })),
-      setActiveNav: (url) =>
-        set((state) => {
-          const updatedNavItems = state.sidebarData.navMain.map((item) => ({
-            ...item,
-            isActive:
-              item.url === url ||
-              url.startsWith(item.url) ||
-              item.items.some((subItem) => subItem.url === url),
-          }));
-          return {
+  devtools(
+    persist(
+      (set) => ({
+        isOpen: true,
+        sidebarData: {
+          navMain: defaultNavItems,
+          projects: [],
+          tournaments: [],
+          quickLinks: [],
+        },
+        toggle: () => set((state) => ({ isOpen: !state.isOpen })),
+        close: () => set({ isOpen: false }),
+        open: () => set({ isOpen: true }),
+        updateNavItems: (navItems) =>
+          set((state) => ({
             sidebarData: {
               ...state.sidebarData,
-              navMain: updatedNavItems,
+              navMain: navItems,
             },
-          };
-        }),
-    }),
-    {
-      name: "sidebar-storage",
-      partialize: (state) => ({ isOpen: state.isOpen }),
-    },
+          })),
+        updateProjects: (projects) =>
+          set((state) => ({
+            sidebarData: {
+              ...state.sidebarData,
+              projects,
+            },
+          })),
+        setActiveNav: (url) =>
+          set((state) => {
+            const updatedNavItems = state.sidebarData.navMain.map((item) => ({
+              ...item,
+              isActive:
+                item.url === url ||
+                url.startsWith(item.url) ||
+                item.items.some((subItem) => subItem.url === url),
+            }));
+            return {
+              sidebarData: {
+                ...state.sidebarData,
+                navMain: updatedNavItems,
+              },
+            };
+          }),
+      }),
+      {
+        name: "sidebar-storage",
+        partialize: (state) => ({ isOpen: state.isOpen }),
+      },
+    ),
+    { name: "sidebar-store" },
   ),
 );

@@ -105,7 +105,7 @@ export const useAuthStore = create<AuthStore>()(
             set({ requestStatus: { isLoading: true, error: null } });
             const response = await authService.getCurrentUser();
             set({
-              user: response.data,
+              user: response.data.data,
               isAuthenticated: true,
               requestStatus: { isLoading: false, error: null },
             });

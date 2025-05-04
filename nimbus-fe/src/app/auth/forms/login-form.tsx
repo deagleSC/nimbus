@@ -40,7 +40,7 @@ export function LoginForm({
       toast.success("Login successful", {
         description: "Welcome back to Nimbus!",
       });
-      router.push("/dashboard");
+      router.push("/dashboard/overview");
     }
   }, [isAuthenticated, router]);
 

@@ -126,6 +126,22 @@ export const getCurrentUser = async (
   }
 };
 
+// Logout user
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // In a stateless JWT authentication system, the server doesn't need to do anything
+    // The client is responsible for removing the token
+    // However, in a real-world application, you might:
+    // 1. Add the token to a blacklist if you want to invalidate it before expiry
+    // 2. Clear any server-side sessions if you're using session-based auth alongside JWTs
+
+    sendSuccess(res, null, "Logged out successfully");
+  } catch (error) {
+    console.error("Logout error:", error);
+    sendError(res, "Server error", 500, error);
+  }
+};
+
 // Update user profile
 export const updateProfile = async (
   req: Request,

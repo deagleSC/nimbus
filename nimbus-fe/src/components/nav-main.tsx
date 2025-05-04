@@ -17,7 +17,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { useSidebarStore } from "@/zustand";
+import { useAuthStore, useSidebarStore } from "@/zustand";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -42,9 +42,19 @@ export function NavMain({
   }[];
 }) {
   const setActiveNav = useSidebarStore((state) => state.setActiveNav);
+  const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
   const pathname = usePathname();
-  const handleItemClick = (item: NavItem) => {
+
+  const handleItemClick = async (item: NavItem) => {
+    // Check if this is the logout URL
+    if (item.url === "/auth/logout") {
+      await logout();
+      router.push("/auth/login");
+      return;
+    }
+
+    // Normal navigation for other URLs
     setActiveNav(item.url);
     router.push(item.url);
   };

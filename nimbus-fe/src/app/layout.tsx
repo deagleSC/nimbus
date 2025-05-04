@@ -8,6 +8,7 @@ import "./globals.css";
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${montserrat.variable} antialiased`}>
+      <body className={`font-sans ${montserrat.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -31,7 +32,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             {children}
-            <Toaster position="bottom-right" richColors />
+            <Toaster position="bottom-right" richColors closeButton />
           </AuthProvider>
         </ThemeProvider>
       </body>

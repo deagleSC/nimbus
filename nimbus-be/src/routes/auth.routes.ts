@@ -5,6 +5,7 @@ import {
   getCurrentUser,
   updateProfile,
   changePassword,
+  logout,
 } from "../controllers/auth.controller";
 import { authenticate } from "../middlewares/auth.middleware";
 
@@ -199,6 +200,35 @@ router.post("/login", login);
  *         description: Server error
  */
 router.get("/me", authenticate, getCurrentUser);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Auth]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Logged out successfully
+ *       401:
+ *         description: Authentication failed
+ *       500:
+ *         description: Server error
+ */
+router.post("/logout", authenticate, logout);
 
 /**
  * @swagger

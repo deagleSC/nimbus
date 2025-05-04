@@ -15,6 +15,12 @@ export interface User {
   avatar?: string;
 }
 
+export interface UserResponse {
+  success: boolean;
+  message: string;
+  data: User;
+}
+
 export interface AuthResponse {
   success: boolean;
   message: string;
@@ -42,8 +48,8 @@ export const authService = {
     });
   },
 
-  getCurrentUser: async (): Promise<ApiResponse<User>> => {
-    return apiRequest<User>({
+  getCurrentUser: async (): Promise<ApiResponse<UserResponse>> => {
+    return apiRequest<UserResponse>({
       method: "GET",
       url: API_CONFIG.endpoints.auth.profile,
     });
