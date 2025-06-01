@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/api";
-import { apiHelper } from "@/zustand/utils/api";
+import { apiHelper } from "@/zustand/utils/api.utils";
 import { signupSchema, SignupFormValues } from "@/lib/validations";
 
 export function SignupForm({

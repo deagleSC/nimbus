@@ -1,10 +1,7 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import {
-  authService,
-  LoginCredentials,
-  User,
-} from "@/zustand/services/authService";
+import { authService } from "@/zustand/services/authService";
+import { LoginCredentials, User } from "@/zustand/types";
 import { ApiError, RequestStatus } from "@/zustand/types";
 import { toast } from "sonner";
 
@@ -216,5 +213,6 @@ export const useAuthStore = create<AuthStore>()(
         }),
       },
     ),
+    { name: "auth-store" },
   ),
 );

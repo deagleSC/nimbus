@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { ApiError, ApiResponse } from "../types";
 import { env } from "@/lib/env";
+import { useAuthStore } from "../stores/authStore";
 
 // Create axios instance with default config
 const api = axios.create({
@@ -46,7 +47,17 @@ api.interceptors.response.use(
     // Handle specific error cases
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
-        localStorage.removeItem("token");
+        // Clear all auth-related data from localStorage
+        localStorage.clear(); // Clear all localStorage items
+
+        // Clear any other relevant data
+        sessionStorage.clear(); // Clear all sessionStorage items
+
+        // Reset the auth store state
+        useAuthStore.getState().logout();
+
+        // Force reload the page to clear all state
+        window.location.href = "/auth/login";
       }
     }
 

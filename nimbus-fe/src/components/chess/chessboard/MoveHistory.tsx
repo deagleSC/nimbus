@@ -17,7 +17,7 @@ export interface MoveHistory {
 }
 
 interface MoveHistoryProps {
-  moveHistory: MoveHistory[];
+  chessInstance: Chess;
   currentPosition: number;
   jumpToPosition: (index: number) => void;
 }
@@ -44,10 +44,12 @@ export function initMoveHistory(chessInstance: Chess): MoveHistory[] {
 }
 
 export default function MoveHistory({
-  moveHistory,
+  chessInstance,
   currentPosition,
   jumpToPosition,
 }: MoveHistoryProps) {
+  const moveHistory = initMoveHistory(chessInstance);
+
   if (moveHistory.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">

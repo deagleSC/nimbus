@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, devtools } from "zustand/middleware";
-import { Brain, LayoutDashboard, PlayCircle } from "lucide-react";
+import { Brain, LayoutDashboard } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 type NavItem = {
@@ -64,21 +64,21 @@ const defaultNavItems: NavItem[] = [
       },
     ],
   },
-  {
-    title: "Play",
-    url: "/play",
-    icon: PlayCircle,
-    items: [
-      {
-        title: "New Game",
-        url: "/play/new",
-      },
-      {
-        title: "Join Game",
-        url: "/play/join",
-      },
-    ],
-  },
+  // {
+  //   title: "Play",
+  //   url: "/play",
+  //   icon: PlayCircle,
+  //   items: [
+  //     {
+  //       title: "New Game",
+  //       url: "/play/new",
+  //     },
+  //     {
+  //       title: "Join Game",
+  //       url: "/play/join",
+  //     },
+  //   ],
+  // },
   {
     title: "AI Coach",
     url: "/ai-coach",
@@ -88,18 +88,18 @@ const defaultNavItems: NavItem[] = [
         title: "Analyze Game",
         url: "/ai-coach/analysis",
       },
-      {
-        title: "Training Puzzles",
-        url: "/ai-coach/puzzles",
-      },
-      {
-        title: "Opening Trainer",
-        url: "/ai-coach/openings",
-      },
-      {
-        title: "Strategy Tips",
-        url: "/ai-coach/strategy",
-      },
+      // {
+      //   title: "Training Puzzles",
+      //   url: "/ai-coach/puzzles",
+      // },
+      // {
+      //   title: "Opening Trainer",
+      //   url: "/ai-coach/openings",
+      // },
+      // {
+      //   title: "Strategy Tips",
+      //   url: "/ai-coach/strategy",
+      // },
     ],
   },
   // {

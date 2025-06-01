@@ -19,6 +19,9 @@ export const API_CONFIG = {
       profile: "/users/profile",
       update: "/users/profile",
     },
+    ai: {
+      analyze: "/ai/analyze-game",
+    },
   },
   defaultHeaders: {
     "Content-Type": "application/json",

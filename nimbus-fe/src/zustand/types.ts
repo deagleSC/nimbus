@@ -16,3 +16,31 @@ export interface RequestStatus {
   isLoading: boolean;
   error: ApiError | null;
 }
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  avatar?: string;
+}
+
+export interface UserResponse {
+  success: boolean;
+  message: string;
+  data: User;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  token: string;
+  data: {
+    user: User;
+  };
+}

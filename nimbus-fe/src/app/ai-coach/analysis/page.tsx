@@ -13,10 +13,8 @@ export default function Analysis() {
       <div>
         <ChessBoard
           initialPosition="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+          // initialPosition="8/P7/8/8/8/8/4k3/7K w - - 0 1"
           playerColor="w"
-          onMove={(move) => {
-            console.log(move);
-          }}
         />
       </div>
     </AppLayout>

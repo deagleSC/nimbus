@@ -13,7 +13,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/zustand";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
-import { User } from "@/zustand/services/authService";
+import { User } from "@/zustand/types";
 
 // JWT token payload interface
 interface JwtPayload {
@@ -162,7 +162,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [
     fetchCurrentUser,
-    handleLogout,
     isAuthenticated,
     isTokenValid,
     user,
