@@ -54,14 +54,24 @@ app.use(
       filter: true,
       showExtensions: true,
       showCommonExtensions: true,
+      tryItOutEnabled: true,
+      syntaxHighlight: {
+        activated: true,
+        theme: "monokai",
+      },
     },
   })
 );
 
+// Serve Swagger JSON
 app.get("/api-docs.json", (req: Request, res: Response) => {
   res.setHeader("Content-Type", "application/json");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.send(swaggerSpec);
 });
+
+// Serve Swagger UI assets
+app.use("/swagger-ui", express.static("node_modules/swagger-ui-dist"));
 
 // Routes
 app.use("/api/auth", authRoutes);
