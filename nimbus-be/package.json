@@ -7,7 +7,9 @@
         "start": "node dist/index.js",
         "dev": "ts-node src/index.ts",
         "build": "tsc -p .",
-        "test": "jest"
+        "test": "jest",
+        "vercel-build": "npm run build",
+        "vercel-dev": "npm run dev"
     },
     "dependencies": {
         "@types/multer": "^1.4.13",

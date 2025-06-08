@@ -20,9 +20,19 @@ const app: Application = express();
 // Middleware
 app.use(
   cors({
-    origin: "*",
+    origin: ["http://localhost:3000", "http://localhost:5173", "*"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+      "Access-Control-Allow-Origin",
+      "Access-Control-Allow-Headers",
+      "Access-Control-Allow-Methods",
+    ],
+    credentials: true,
   })
 );
 app.use(morgan("dev"));
