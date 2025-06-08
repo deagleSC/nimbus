@@ -21,6 +21,10 @@ const swaggerDefinition = {
       url: `http://localhost:${config.port}`,
       description: "Development server",
     },
+    {
+      url: process.env.API_URL || "https://nimbus-be.vercel.app",
+      description: "Production server",
+    },
   ],
   components: {
     securitySchemes: {
