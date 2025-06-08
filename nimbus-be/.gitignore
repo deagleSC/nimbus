@@ -27,4 +27,5 @@ yarn-error.log*
 *.swo 
 
 # lock files 
-*.lock
+package-lock.json
+yarn.lock

@@ -13,11 +13,13 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { useAuthStore, useSidebarStore } from "@/zustand";
+import { useSidebarStore, useUserStore } from "@/zustand";
 import { AppBranding } from "./app-branding";
+import { isEmpty } from "lodash";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const user = useAuthStore((state) => state.user);
+  const userData = useUserStore((state) => state.userData);
+  const getUserData = useUserStore((state) => state.fetchUserProfile);
   const { sidebarData, setActiveNav } = useSidebarStore();
   const pathname = usePathname();
 
@@ -28,15 +30,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, [pathname, setActiveNav]);
 
-  const userData = {
-    name: user?.name ?? "",
-    email: user?.email ?? "",
-    avatar: user?.avatar ?? "",
-  };
-
   useEffect(() => {
-    console.log(user);
-  }, [user]);
+    if (isEmpty(userData)) {
+      getUserData();
+    }
+  }, [userData, getUserData]);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -47,7 +45,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={sidebarData.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={userData} />
+        <NavUser user={userData ?? { name: "", email: "", image: "" }} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -9,6 +9,7 @@ import swaggerSpec from "./config/swagger";
 import connectDB from "./config/database";
 import authRoutes from "./routes/auth.routes";
 import aiRoutes from "./routes/ai.routes";
+import supportRoutes from "./routes/support.routes";
 // Connect to MongoDB
 connectDB();
 
@@ -37,6 +38,7 @@ app.get("/api-docs.json", (req: Request, res: Response) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/support", supportRoutes);
 // Root route
 app.get("/", (_req: Request, res: Response) => {
   res.json({ message: "Welcome to Nimbus API" });

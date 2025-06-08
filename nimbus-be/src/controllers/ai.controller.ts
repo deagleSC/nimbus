@@ -1,21 +1,25 @@
 import { Request, Response } from "express";
 import { sendSuccess, sendError } from "../utils/apiResponse";
 import axios from "axios";
-import Analysis from "../models/Analysis";
+import Analysis from "../models/analysis.model";
 import { keysToCamelCase } from "../utils/common.utils";
 
 export const analyzeGame = async (req: Request, res: Response) => {
   const pgn = req.body.pgn;
   const color = req.body.color;
   const gameId = req.body.gameId;
+  const userId = req.body.userId;
   const openRouterKey = process.env.OPENROUTER_API_KEY;
 
-  if (!pgn || !color) {
+  if (!pgn || !color || !userId) {
     if (!pgn) {
       sendError(res, "PGN is required", 400);
     }
     if (!color) {
       sendError(res, "Color is required", 400);
+    }
+    if (!userId) {
+      sendError(res, "User ID is required", 400);
     }
     return;
   }
@@ -65,6 +69,7 @@ Keep the analysis clear and actionable, focusing on the most important aspects o
     // Create a new analysis document
     const analysis = new Analysis({
       gameId: gameId || null,
+      userId: userId,
       id: response.data.id,
       provider: response.data.provider || "openrouter",
       modelName: response.data.model,

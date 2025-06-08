@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import User from "../models/User";
+import User from "../models/user.model";
 import config from "../config/config";
 import { sendSuccess, sendError, sendAuthSuccess } from "../utils/apiResponse";
+import cloudinary from "../config/cloudinary";
 
 // Generate JWT token with a fixed expiration time to avoid type issues
 const generateToken = (id: string, role: string): string => {
@@ -47,6 +48,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         email: user.email,
         role: user.role,
+        image: user.image,
       },
       "Registration successful",
       201
@@ -88,6 +90,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         email: user.email,
         role: user.role,
+        image: user.image,
       },
       "Login successful"
     );
@@ -117,6 +120,7 @@ export const getCurrentUser = async (
         name: user.name,
         email: user.email,
         role: user.role,
+        image: user.image,
       },
       "User profile retrieved successfully"
     );
@@ -148,12 +152,39 @@ export const updateProfile = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { name, email } = req.body;
+    const { name, email, image } = req.body;
+    const file = req.file;
+
+    console.log(req.body);
 
     // Create update object
-    const updateData: { name?: string; email?: string } = {};
+    const updateData: { name?: string; email?: string; image?: string } = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
+
+    // Handle image
+    if (file) {
+      try {
+        // Convert buffer to base64
+        const b64 = Buffer.from(file.buffer).toString("base64");
+        const dataURI = `data:${file.mimetype};base64,${b64}`;
+
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(dataURI, {
+          folder: "nimbus/profile_images",
+          resource_type: "auto",
+        });
+
+        updateData.image = result.secure_url;
+      } catch (uploadError) {
+        console.error("Image upload error:", uploadError);
+        sendError(res, "Failed to upload image", 500);
+        return;
+      }
+    } else if (image === "") {
+      // If image is explicitly set to empty string, remove the image
+      updateData.image = "";
+    }
 
     // Update user
     const user = await User.findByIdAndUpdate(req.user._id, updateData, {
@@ -173,6 +204,7 @@ export const updateProfile = async (
         name: user.name,
         email: user.email,
         role: user.role,
+        image: user.image,
       },
       "Profile updated successfully"
     );

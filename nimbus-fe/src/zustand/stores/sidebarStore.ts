@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, devtools } from "zustand/middleware";
-import { Brain, LayoutDashboard } from "lucide-react";
+import { Brain, LayoutDashboard, HelpCircle } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 type NavItem = {
@@ -102,6 +102,12 @@ const defaultNavItems: NavItem[] = [
       // },
     ],
   },
+  {
+    title: "Contact Support",
+    url: "/support",
+    icon: HelpCircle,
+    items: [],
+  },
   // {
   //   title: "About",
   //   url: "/about",
@@ -156,9 +162,12 @@ export const useSidebarStore = create<SidebarState>()(
             const updatedNavItems = state.sidebarData.navMain.map((item) => ({
               ...item,
               isActive:
-                item.url === url ||
-                url.startsWith(item.url) ||
-                item.items.some((subItem) => subItem.url === url),
+                url === item.url ||
+                url.startsWith(item.url + "/") ||
+                item.items.some(
+                  (subItem) =>
+                    url === subItem.url || url.startsWith(subItem.url + "/"),
+                ),
             }));
             return {
               sidebarData: {

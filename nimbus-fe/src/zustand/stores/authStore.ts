@@ -54,8 +54,6 @@ export const useAuthStore = create<AuthStore>()(
               requestStatus: { isLoading: false, error: null },
             });
           } catch (error) {
-            console.log("Login error object:", error);
-
             // Extract the error message from the API error
             let errorMessage: string;
 
@@ -74,8 +72,6 @@ export const useAuthStore = create<AuthStore>()(
               console.error("Unhandled error format:", error);
               errorMessage = "Login failed";
             }
-
-            console.log("Final login error message:", errorMessage);
 
             set({
               requestStatus: {

@@ -27,7 +27,7 @@ export interface User {
   email: string;
   name: string;
   role: string;
-  avatar?: string;
+  image?: string;
 }
 
 export interface UserResponse {

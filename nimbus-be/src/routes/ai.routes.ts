@@ -28,6 +28,7 @@ const router = express.Router();
  *             required:
  *               - pgn
  *               - color
+ *               - userId
  *             properties:
  *               pgn:
  *                 type: string
@@ -42,6 +43,10 @@ const router = express.Router();
  *                 type: string
  *                 description: Optional ID of the game being analyzed
  *                 example: "game_123"
+ *               userId:
+ *                 type: string
+ *                 description: ID of the user requesting the analysis
+ *                 example: "user_123"
  *     responses:
  *       200:
  *         description: Game analysis completed successfully

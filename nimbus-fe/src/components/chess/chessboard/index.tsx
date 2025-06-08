@@ -86,10 +86,6 @@ export default function ChessBoard({
   // Refs
   const chessboardRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    console.log(gameState.pgn());
-  }, [gameState]);
-
   // Jump to a specific position in the game history
   const jumpToPosition = useCallback(
     (index: number) => {

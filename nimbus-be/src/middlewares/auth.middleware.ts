@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { Secret, JwtPayload as JsonWebTokenPayload } from "jsonwebtoken";
 import config from "../config/config";
-import User from "../models/User";
+import User from "../models/user.model";
 import { sendError } from "../utils/apiResponse";
 
 interface JwtPayload extends JsonWebTokenPayload {

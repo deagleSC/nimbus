@@ -7,6 +7,7 @@ export const aiService = {
     pgn: string,
     color: string,
     gameId: string,
+    userId: string,
   ): Promise<ApiResponse<unknown>> => {
     return apiRequest<unknown>({
       method: "POST",
@@ -15,6 +16,7 @@ export const aiService = {
         pgn,
         color,
         gameId,
+        userId,
       },
       timeout: 0,
     });

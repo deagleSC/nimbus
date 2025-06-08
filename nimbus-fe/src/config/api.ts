@@ -9,18 +9,22 @@ export const API_CONFIG = {
   endpoints: {
     auth: {
       login: "/auth/login",
-      signup: "/auth/register",
+      signup: "/auth/signup",
       logout: "/auth/logout",
       profile: "/auth/me",
       refresh: "/auth/refresh",
       changePassword: "/auth/change-password",
     },
     user: {
-      profile: "/users/profile",
-      update: "/users/profile",
+      profile: "/user/profile",
+      update: "/user/update",
     },
     ai: {
       analyze: "/ai/analyze-game",
+    },
+    support: {
+      request: "/support/request",
+      requests: "/support/requests",
     },
   },
   defaultHeaders: {

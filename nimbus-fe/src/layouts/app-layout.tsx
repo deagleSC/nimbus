@@ -16,16 +16,19 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useSidebarStore } from "@/zustand";
+import { cn } from "@/lib/utils";
 
 export default function AppLayout({
   breadcrumbs,
   children,
+  className,
 }: {
   breadcrumbs: {
     title: string;
     href: string;
   }[];
   children: React.ReactNode;
+  className?: string;
 }) {
   const { isOpen, toggle } = useSidebarStore();
 
@@ -71,7 +74,9 @@ export default function AppLayout({
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div
+          className={cn(className, "flex flex-1 flex-col gap-4 p-4 pt-0 px-6")}
+        >
           {/* <div className="grid auto-rows-min gap-4 md:grid-cols-3">
             <div className="bg-muted/50 aspect-video rounded-xl" />
             <div className="bg-muted/50 aspect-video rounded-xl" />

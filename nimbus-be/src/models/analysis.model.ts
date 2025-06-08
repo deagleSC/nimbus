@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 interface IAnalysis extends Document {
   gameId: string;
   id: string;
+  userId: string;
   provider: string;
   modelName: string;
   object: string;
@@ -32,6 +33,7 @@ const AnalysisSchema = new Schema(
   {
     gameId: { type: String, required: false },
     id: { type: String, required: true },
+    userId: { type: String, required: true },
     provider: { type: String, required: true },
     modelName: { type: String, required: true },
     object: { type: String, required: true },

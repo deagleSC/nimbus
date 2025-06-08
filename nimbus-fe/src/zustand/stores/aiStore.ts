@@ -11,7 +11,12 @@ interface AIState {
 }
 
 interface AIActions {
-  analyzeGame: (pgn: string, color: string, gameId: string) => Promise<void>;
+  analyzeGame: (
+    pgn: string,
+    color: string,
+    gameId: string,
+    userId: string,
+  ) => Promise<void>;
   clearAnalysis: () => void;
   clearErrors: () => void;
 }
@@ -32,13 +37,18 @@ export const useAIStore = create<AIStore>()(
       isAnalyzing: false,
 
       // Actions
-      analyzeGame: async (pgn: string, color: string, gameId: string) => {
+      analyzeGame: async (
+        pgn: string,
+        color: string,
+        gameId: string,
+        userId: string,
+      ) => {
         try {
           set({
             isAnalyzing: true,
             requestStatus: { isLoading: true, error: null },
           });
-          const response = await aiService.analyze(pgn, color, gameId);
+          const response = await aiService.analyze(pgn, color, gameId, userId);
 
           set({
             analysis: response.data,

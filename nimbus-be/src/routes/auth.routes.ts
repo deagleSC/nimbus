@@ -8,6 +8,7 @@ import {
   logout,
 } from "../controllers/auth.controller";
 import { authenticate } from "../middlewares/auth.middleware";
+import { upload } from "../middlewares/upload.middleware";
 
 const router = express.Router();
 
@@ -241,7 +242,7 @@ router.post("/logout", authenticate, logout);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -252,6 +253,10 @@ router.post("/logout", authenticate, logout);
  *                 type: string
  *                 format: email
  *                 description: User's new email
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: User's profile image (JPEG, PNG, or GIF)
  *     responses:
  *       200:
  *         description: Profile updated successfully
@@ -281,6 +286,9 @@ router.post("/logout", authenticate, logout);
  *                     role:
  *                       type: string
  *                       example: user
+ *                     image:
+ *                       type: string
+ *                       example: https://res.cloudinary.com/example/image/upload/v1234567890/profile.jpg
  *       401:
  *         description: Authentication failed
  *       404:
@@ -288,7 +296,12 @@ router.post("/logout", authenticate, logout);
  *       500:
  *         description: Server error
  */
-router.put("/update-profile", authenticate, updateProfile);
+router.put(
+  "/update-profile",
+  authenticate,
+  upload.single("image"),
+  updateProfile
+);
 
 /**
  * @swagger

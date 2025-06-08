@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { apiHelper } from "@/zustand/utils/api.utils";
-import { API_CONFIG } from "@/config/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,31 +15,38 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toast } from "sonner";
 import { changePasswordSchema } from "@/lib/validations";
 import AppLayout from "@/layouts/app-layout";
+import Link from "next/link";
+import { useUserStore } from "@/zustand/stores/userStore";
+import Image from "next/image";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Camera, Trash2, User } from "lucide-react";
 
 // Define the form schema
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 
-// Define the user response type
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
 export default function AccountPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const {
+    userData,
+    isLoading,
+    fetchUserProfile,
+    updateProfile,
+    changePassword,
+  } = useUserStore();
 
   // Initialize profile form with empty values
   const {
@@ -53,7 +58,6 @@ export default function AccountPage() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: "",
-      email: "",
     },
   });
 
@@ -74,87 +78,60 @@ export default function AccountPage() {
 
   // Fetch user data on component mount
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await apiHelper.get<{ data: UserData }>(
-          API_CONFIG.endpoints.auth.profile,
-        );
-        if (response.data && response.data.data) {
-          reset({
-            name: response.data.data.name,
-            email: response.data.data.email,
-          });
-        }
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Failed to load user profile data";
-        toast.error("Error loading profile", {
-          description: errorMessage,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    fetchUserProfile();
+  }, [fetchUserProfile]);
 
-    fetchUserData();
-  }, [reset]);
+  // Update form when user data is loaded
+  useEffect(() => {
+    if (userData) {
+      reset({
+        name: userData.name,
+      });
+    }
+  }, [userData, reset]);
+
+  // Handle image selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle image removal
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setPreviewUrl("");
+  };
 
   // Handle profile form submission
   async function onSubmit(data: ProfileFormValues) {
-    try {
-      setIsLoading(true);
-      await apiHelper.put(
-        API_CONFIG.endpoints.auth.profile.replace("/me", "/update-profile"),
-        data,
-      );
-      toast.success("Profile updated", {
-        description: "Your profile has been updated successfully",
-      });
-      router.refresh();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to update profile";
-      toast.error("Update failed", {
-        description: errorMessage,
-      });
-    } finally {
-      setIsLoading(false);
+    const formData = new FormData();
+    formData.append("name", data.name);
+
+    if (selectedImage) {
+      formData.append("image", selectedImage);
+    } else if (!previewUrl && userData?.image) {
+      // If there's no preview URL and we had an image before, it means we want to remove the image
+      formData.append("image", "");
+    } else {
+      // If we're not changing the image, don't include the image field at all
+      formData.append("image", userData?.image || "");
     }
+
+    await updateProfile(formData);
+    router.refresh();
   }
 
   // Handle password change form submission
   async function onPasswordChange(data: ChangePasswordFormValues) {
-    try {
-      setIsChangingPassword(true);
-
-      // Only pass currentPassword and newPassword to the API
-      const passwordChangeData = {
-        currentPassword: data.currentPassword,
-        newPassword: data.newPassword,
-      };
-
-      await apiHelper.put(
-        API_CONFIG.endpoints.auth.changePassword,
-        passwordChangeData,
-      );
-
-      toast.success("Password updated", {
-        description: "Your password has been updated successfully",
-      });
-
-      resetPassword();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to update password";
-      toast.error("Password update failed", {
-        description: errorMessage,
-      });
-    } finally {
-      setIsChangingPassword(false);
-    }
+    await changePassword(data.currentPassword, data.newPassword);
+    resetPassword();
   }
 
   return (
@@ -172,6 +149,63 @@ export default function AccountPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="relative w-24 h-24 rounded-full border overflow-hidden drop-shadow-glow-1">
+                    {previewUrl || userData?.image ? (
+                      <Image
+                        src={previewUrl || userData?.image || ""}
+                        alt="Profile"
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <User className="text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="bg-black"
+                        >
+                          Update Image
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            document.getElementById("profile-image")?.click()
+                          }
+                          className="cursor-pointer"
+                        >
+                          <Camera className="mr-2 h-4 w-4" />
+                          <span>Upload Image</span>
+                        </DropdownMenuItem>
+                        {(previewUrl || userData?.image) && (
+                          <DropdownMenuItem
+                            onClick={handleRemoveImage}
+                            className="cursor-pointer text-red-500"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Remove Current</span>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Input
+                      id="profile-image"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="name">Name</Label>
                   <Input
@@ -191,16 +225,20 @@ export default function AccountPage() {
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
-                    placeholder="Your email"
-                    {...register("email")}
-                    disabled={isLoading}
-                    aria-invalid={errors.email ? "true" : "false"}
+                    value={userData?.email || ""}
+                    disabled={true}
+                    className="bg-gray-100"
                   />
-                  {errors.email && (
-                    <p className="text-sm text-red-500">
-                      {errors.email.message}
-                    </p>
-                  )}
+                  <p className="text-sm text-gray-500">
+                    Email address cannot be updated. Please{" "}
+                    <Link
+                      href="/support"
+                      className="text-blue-500 hover:text-blue-500/80"
+                    >
+                      contact support
+                    </Link>{" "}
+                    if you need to change your email.
+                  </p>
                 </div>
                 <div className="flex justify-end">
                   <Button
@@ -234,7 +272,7 @@ export default function AccountPage() {
                     type="password"
                     placeholder="••••••••"
                     {...registerPassword("currentPassword")}
-                    disabled={isChangingPassword}
+                    disabled={isLoading}
                     aria-invalid={
                       passwordErrors.currentPassword ? "true" : "false"
                     }
@@ -252,7 +290,7 @@ export default function AccountPage() {
                     type="password"
                     placeholder="••••••••"
                     {...registerPassword("newPassword")}
-                    disabled={isChangingPassword}
+                    disabled={isLoading}
                     aria-invalid={passwordErrors.newPassword ? "true" : "false"}
                   />
                   {passwordErrors.newPassword && (
@@ -268,7 +306,7 @@ export default function AccountPage() {
                     type="password"
                     placeholder="••••••••"
                     {...registerPassword("confirmPassword")}
-                    disabled={isChangingPassword}
+                    disabled={isLoading}
                     aria-invalid={
                       passwordErrors.confirmPassword ? "true" : "false"
                     }
@@ -283,10 +321,10 @@ export default function AccountPage() {
                   <Button
                     variant="outline"
                     type="submit"
-                    disabled={isChangingPassword}
+                    disabled={isLoading}
                     className="bg-black"
                   >
-                    {isChangingPassword ? "Updating..." : "Update Password"}
+                    {isLoading ? "Updating..." : "Update Password"}
                   </Button>
                 </div>
               </form>

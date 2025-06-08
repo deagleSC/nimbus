@@ -3,7 +3,7 @@
 import { Chess } from "chess.js";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Brain, Loader2, ChevronDown } from "lucide-react";
+import { Sparkles, Brain, Loader2, ChevronDown, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -29,6 +29,7 @@ import { useAIStore } from "@/zustand/stores/aiStore";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Note } from "@/components/ui/note";
+import { useAuthStore } from "@/zustand/stores/authStore";
 
 interface GameAnalysisProps {
   chess: Chess;
@@ -70,6 +71,7 @@ export default function GameAnalysis({ chess }: GameAnalysisProps) {
   const analyzeGame = useAIStore((state) => state.analyzeGame);
   const aiAnalysis = useAIStore((state) => state.analysis);
   const isAnalyzing = useAIStore((state) => state.isAnalyzing);
+  const userId = useAuthStore((state) => state.user?.id);
 
   useEffect(() => {
     if (aiAnalysis) {
@@ -80,10 +82,9 @@ export default function GameAnalysis({ chess }: GameAnalysisProps) {
   const generateAnalysis = async (e: React.MouseEvent) => {
     e.preventDefault();
     setIsOpen(true);
-    console.log(chess.pgn());
 
     setShowDialog(false);
-    await analyzeGame(chess.pgn(), "w", "1");
+    await analyzeGame(chess.pgn(), "w", "1", userId as string);
   };
 
   return (
@@ -159,7 +160,15 @@ export default function GameAnalysis({ chess }: GameAnalysisProps) {
           <CardContent className="p-4 pt-0">
             <div className="flex flex-col gap-4">
               {isAnalyzing ? (
-                <Skeleton className="h-full w-full" />
+                <div className="flex flex-col gap-4">
+                  <div className="w-full">
+                    <Skeleton className="h-[200px] w-full" />
+                  </div>
+                  <div className="flex gap-4 w-full">
+                    <Skeleton className="h-[200px] w-1/2" />
+                    <Skeleton className="h-[200px] w-1/2" />
+                  </div>
+                </div>
               ) : analysis ? (
                 <>
                   {/* First Row - Game Summary */}
@@ -217,7 +226,7 @@ export default function GameAnalysis({ chess }: GameAnalysisProps) {
                     <Card className="p-6 border-none shadow-sm bg-muted/50">
                       <CardHeader className="px-0 pt-0">
                         <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                          <ChevronDown className="h-4 w-4 text-primary" />
+                          <Lightbulb className="h-4 w-4 text-primary" />
                           Suggestions
                         </CardTitle>
                       </CardHeader>
