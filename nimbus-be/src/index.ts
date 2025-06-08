@@ -10,6 +10,7 @@ import connectDB from "./config/database";
 import authRoutes from "./routes/auth.routes";
 import aiRoutes from "./routes/ai.routes";
 import supportRoutes from "./routes/support.routes";
+
 // Connect to MongoDB
 connectDB();
 
@@ -39,6 +40,7 @@ app.get("/api-docs.json", (req: Request, res: Response) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/support", supportRoutes);
+
 // Root route
 app.get("/", (_req: Request, res: Response) => {
   res.json({ message: "Welcome to Nimbus API" });
@@ -52,9 +54,13 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     .json({ success: false, message: "Server error", error: err.message });
 });
 
-// Start server
-const PORT = config.port;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Swagger API Documentation: http://localhost:${PORT}/api-docs`);
-});
+// Only start the server if we're not in a serverless environment
+if (process.env.NODE_ENV !== "production") {
+  const PORT = config.port;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Swagger API Documentation: http://localhost:${PORT}/api-docs`);
+  });
+}
+
+export default app;
